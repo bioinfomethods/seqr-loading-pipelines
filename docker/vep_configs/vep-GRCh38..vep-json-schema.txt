@@ -1,0 +1,67 @@
+Struct{
+  check_ref: String,
+  input: String,
+  most_severe_consequence: String,
+  motif_feature_consequences: Array[
+    Struct{
+      consequence_terms: Array[String],
+      motif_feature_id: String
+    }
+  ],
+  regulatory_feature_consequences: Array[
+    Struct{
+      biotype: String,
+      consequence_terms: Array[String],
+      regulatory_feature_id: String
+    }
+  ],
+  transcript_consequences: Array[
+    Struct{
+      am_pathogenicity: Float32,
+      amino_acids: String,
+      biotype: String,
+      canonical: Int32,
+      codons: String,
+      consequence_terms: Array[String],
+      exon: String,
+      existing_inframe_oorfs: Int32,
+      existing_outofframe_oorfs: Int32,
+      existing_uorfs: Int32,
+      fiveutr_annotation: Dict[
+        String,
+        Struct{
+          AltStop: String,
+          AltStopDistanceToCDS: String,
+          CapDistanceToStart: String,
+          DistanceToCDS: String,
+          DistanceToStop: String,
+          Evidence: String,
+          FrameWithCDS: String,
+          KozakContext: String,
+          KozakStrength: String,
+          StartDistanceToCDS: String,
+          Type: String,
+          alt_type: String,
+          alt_type_length: String,
+          newSTOPDistanceToCDS: String,
+          ref_StartDistanceToCDS: String,
+          ref_type: String,
+          ref_type_length: String
+        }
+      ],
+      fiveutr_consequence: String,
+      gene_id: String,
+      hgvsc: String,
+      hgvsp: String,
+      intron: String,
+      lof: String,
+      lof_filter: String,
+      lof_flags: String,
+      lof_info: String,
+      mane_plus_clinical: String,
+      mane_select: String,
+      spliceregion: Array[String],
+      transcript_id: String
+    }
+  ]
+}

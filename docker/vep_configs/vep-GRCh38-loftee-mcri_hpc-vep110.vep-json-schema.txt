@@ -1,6 +1,5 @@
 Struct{
   allele_string: String,
-  am_pathogenicity: Float32,
   ancestral: String,
   assembly_name: String,
   check_ref: String,
@@ -98,6 +97,8 @@ Struct{
   transcript_consequences: Array[
     Struct{
       allele_num: Int32,
+      am_class: String,
+      am_pathogenicity: Float64,
       amino_acids: String,
       appris: String,
       biotype: String,
