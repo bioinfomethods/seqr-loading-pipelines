@@ -13,6 +13,7 @@ Struct{
       amr_allele: String,
       amr_maf: Float64,
       clin_sig: Array[String],
+      clin_sig_allele: String,
       eas_allele: String,
       eas_maf: Float64,
       ea_allele: String,
@@ -38,6 +39,41 @@ Struct{
       exac_oth_maf: Float64,
       exac_sas_allele: String,
       exac_sas_maf: Float64,
+      frequencies: Dict[
+        String,
+        Struct{
+          af: Float64,
+          afr: Float64,
+          amr: Float64,
+          asj: Float64,
+          eas: Float64,
+          eur: Float64,
+          fin: Float64,
+          gnomade: Float64,
+          gnomade_afr: Float64,
+          gnomade_ami: Float64,
+          gnomade_amr: Float64,
+          gnomade_asj: Float64,
+          gnomade_eas: Float64,
+          gnomade_fin: Float64,
+          gnomade_mid: Float64,
+          gnomade_nfe: Float64,
+          gnomade_oth: Float64,
+          gnomade_sas: Float64,
+          gnomadg: Float64,
+          gnomadg_afr: Float64,
+          gnomadg_ami: Float64,
+          gnomadg_amr: Float64,
+          gnomadg_asj: Float64,
+          gnomadg_eas: Float64,
+          gnomadg_fin: Float64,
+          gnomadg_mid: Float64,
+          gnomadg_nfe: Float64,
+          gnomadg_oth: Float64,
+          gnomadg_sas: Float64,
+          sas: Float64
+        }
+      ],
       id: String,
       minor_allele: String,
       minor_allele_freq: Float64,
@@ -45,9 +81,11 @@ Struct{
       pubmed: Array[Int32],
       sas_allele: String,
       sas_maf: Float64,
+      seq_region_name: String,
       somatic: Int32,
       start: Int32,
-      strand: Int32
+      strand: Int32,
+      var_synonyms: Dict[String, Array[String]]
     }
   ],
   context: String,
@@ -63,6 +101,7 @@ Struct{
       variant_allele: String
     }
   ],
+  minimised: Int32,
   most_severe_consequence: String,
   motif_feature_consequences: Array[
     Struct{
@@ -76,6 +115,7 @@ Struct{
       motif_pos: Int32,
       motif_score_change: Float64,
       strand: Int32,
+      transcription_factors: Array[String],
       variant_allele: String
     }
   ],
@@ -117,7 +157,34 @@ Struct{
           name: String
         }
       ],
+      existing_inframe_oorfs: Int32,
+      existing_outofframe_oorfs: Int32,
+      existing_uorfs: Int32,
       exon: String,
+      fiveutr_annotation: Dict[
+        String,
+        Struct{
+          AltStop: String,
+          AltStopDistanceToCDS: String,
+          CapDistanceToStart: String,
+          DistanceToCDS: String,
+          DistanceToStop: String,
+          Evidence: String,
+          FrameWithCDS: String,
+          KozakContext: String,
+          KozakStrength: String,
+          StartDistanceToCDS: String,
+          Type: String,
+          alt_type: String,
+          alt_type_length: String,
+          newSTOPDistanceToCDS: String,
+          ref_StartDistanceToCDS: String,
+          ref_type: String,
+          ref_type_length: String
+        }
+      ],
+      fiveutr_consequence: String,
+      flags: Array[String],
       gene_id: String,
       gene_pheno: Int32,
       gene_symbol: String,
@@ -132,7 +199,10 @@ Struct{
       lof_filter: String,
       lof_flags: String,
       lof_info: String,
+      mane_plus_clinical: String,
+      mane_select: String,
       minimised: Int32,
+      mirna: Array[String],
       polyphen_prediction: String,
       polyphen_score: Float64,
       protein_end: Int32,
@@ -140,14 +210,17 @@ Struct{
       protein_start: Int32,
       sift_prediction: String,
       sift_score: Float64,
+      spliceregion: Array[String],
       strand: Int32,
-      swissprot: String,
+      swissprot: Array[String],
       transcript_id: String,
-      trembl: String,
+      trembl: Array[String],
       tsl: Int32,
-      uniparc: String,
+      uniprot_isoform: Array[String],
+      uniparc: Array[String],
       variant_allele: String
     }
   ],
+  uniprot_isoform: Array[String],
   variant_class: String
 }
