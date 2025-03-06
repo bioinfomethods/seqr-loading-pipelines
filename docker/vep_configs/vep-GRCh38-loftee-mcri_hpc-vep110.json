@@ -1,6 +1,5 @@
 {
     "command": [
-        "bash", "-c",
         "/hpc/genomeref/ensembl-vep-release-110/vep",
         "-json",
         "--hgvs",
@@ -26,8 +25,7 @@
         "--plugin", "AlphaMissense,file=/hpc/genomeref/hg38/seqr/seqr-reference-data/vep/GRCh38/AlphaMissense_hg38.tsv.gz",
         "--dir_plugins", "/hpc/genomeref/ensembl-vep-release-110/plugins",
         "--warning_file", "STDERR",
-        "-o", "STDOUT",
-        "| sed s/5utr/fiveutr/g"
+        "-o", "STDOUT"
     ],
     "env": {
         "PERL5LIB": "/hpc/bpipeLibrary/shared/perlbrew-0.98/.perlbrew/libs/perl-5.36.1@vep-110/lib/perl5:/hpc/genomeref/ensembl-vep-release-110/plugins"

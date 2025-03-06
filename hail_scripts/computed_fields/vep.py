@@ -146,7 +146,7 @@ def get_expr_for_vep_gene_ids_set(vep_transcript_consequences_root, only_coding_
 
 def get_expr_for_vep_protein_domains_set(vep_transcript_consequences_root):
     return hl.set(
-        vep_transcript_consequences_root.flatmap(lambda c: c.domains.map(lambda domain: domain.db + ":" + domain.name))
+        vep_transcript_consequences_root.flatmap(lambda c: c.domains.map(lambda domain: hl.str(domain.db) + ":" + hl.str(domain.name)))
     )
 
 
@@ -276,7 +276,7 @@ def get_expr_for_vep_sorted_transcript_consequences_array(vep_root,
                 biotype_id=BIOTYPE_LOOKUP[c.biotype],
                 consequence_terms=c.consequence_terms.filter(lambda t: ~omit_consequence_terms.contains(t)),
                 consequence_term_ids=_consequence_term_ids(c),
-                domains=c.domains.map(lambda domain: domain.db + ":" + domain.name),
+                domains=c.domains.map(lambda domain: hl.str(domain.db) + ":" + hl.str(domain.name)),
                 major_consequence=hl.cond(
                     c.consequence_terms.size() > 0,
                     hl.sorted(c.consequence_terms, key=lambda t: CONSEQUENCE_TERM_RANK_LOOKUP.get(t))[0],
@@ -310,52 +310,6 @@ def get_expr_for_vep_sorted_transcript_consequences_array(vep_root,
                         & c.spliceregion.contains(
                             EXTENDED_INTRONIC_SPLICE_REGION_VARIANT,
                         )
-                    ),
-                ),
-                utrannotator=hl.struct(
-                    existing_inframe_oorfs=c.existing_inframe_oorfs,
-                    existing_outofframe_oorfs=c.existing_outofframe_oorfs,
-                    existing_uorfs=c.existing_uorfs,
-                    fiveutr_consequence_id=FIVEUTR_CONSEQUENCES_LOOKUP[c.fiveutr_consequence],
-                    # Annotation documentation here:
-                    # https://github.com/ImperialCardioGenetics/UTRannotator?tab=readme-ov-file#the-detailed-annotation-for-each-consequence
-                    # NB:
-                    fiveutr_annotation=c.fiveutr_annotation['1'].annotate(
-                        AltStopDistanceToCDS=hl.parse_int32(
-                            c.fiveutr_annotation['1'].AltStopDistanceToCDS,
-                        ),
-                        CapDistanceToStart=hl.parse_int32(
-                            c.fiveutr_annotation['1'].CapDistanceToStart,
-                        ),
-                        DistanceToCDS=hl.parse_int32(
-                            c.fiveutr_annotation['1'].DistanceToCDS,
-                        ),
-                        DistanceToStop=hl.parse_int32(
-                            c.fiveutr_annotation['1'].DistanceToStop,
-                        ),
-                        Evidence=hl.or_missing(
-                            # Just in case a weird value ("NA" or anything else) propagates
-                            (
-                                (c.fiveutr_annotation['1'].Evidence == 'True')
-                                | (c.fiveutr_annotation['1'].Evidence == 'False')
-                            ),
-                            hl.bool(c.fiveutr_annotation['1'].Evidence),
-                        ),
-                        StartDistanceToCDS=hl.parse_int32(
-                            c.fiveutr_annotation['1'].StartDistanceToCDS,
-                        ),
-                        newSTOPDistanceToCDS=hl.parse_int32(
-                            c.fiveutr_annotation['1'].newSTOPDistanceToCDS,
-                        ),
-                        alt_type_length=hl.parse_int32(
-                            c.fiveutr_annotation['1'].alt_type_length,
-                        ),
-                        ref_StartDistanceToCDS=hl.parse_int32(
-                            c.fiveutr_annotation['1'].ref_StartDistanceToCDS,
-                        ),
-                        ref_type_length=hl.parse_int32(
-                            c.fiveutr_annotation['1'].ref_type_length,
-                        ),
                     ),
                 ),
             )
