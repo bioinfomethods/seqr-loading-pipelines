@@ -254,21 +254,6 @@ def get_expr_for_vep_sorted_transcript_consequences_array(vep_root,
     omit_consequence_terms = hl.set(omit_consequences) if omit_consequences else hl.empty_set(hl.tstr)
 
     result = hl.sorted(
-        # vep_root.transcript_consequences.map(
-        #     lambda c: c.select(
-        #         *selected_annotations,
-        #         alphamissense=hl.struct(
-        #             pathogenicity=c.am_pathogenicity,
-        #         ),
-        #         consequence_terms=c.consequence_terms.filter(lambda t: ~omit_consequence_terms.contains(t)),
-        #         domains=c.domains.map(lambda domain: domain.db + ":" + domain.name),
-        #         major_consequence=hl.cond(
-        #             c.consequence_terms.size() > 0,
-        #             hl.sorted(c.consequence_terms, key=lambda t: CONSEQUENCE_TERM_RANK_LOOKUP.get(t))[0],
-        #             hl.null(hl.tstr),
-        #         )
-        #     )
-        # )
         vep_root.transcript_consequences.map(
             lambda c: c.select(
                 *selected_annotations,
@@ -312,6 +297,54 @@ def get_expr_for_vep_sorted_transcript_consequences_array(vep_root,
                         )
                     ),
                 ),
+                # Could not get below going because `fiveutr_*` assumes VEP command outputs this
+                # but instead VEP annotations start with `5utr_*`.
+                # utrannotator=hl.struct(
+                #     existing_inframe_oorfs=c.existing_inframe_oorfs,
+                #     existing_outofframe_oorfs=c.existing_outofframe_oorfs,
+                #     existing_uorfs=c.existing_uorfs,
+                #     fiveutr_consequence_id=FIVEUTR_CONSEQUENCES_LOOKUP[c.fiveutr_consequence],
+                #     # Annotation documentation here:
+                #     # https://github.com/ImperialCardioGenetics/UTRannotator?tab=readme-ov-file#the-detailed-annotation-for-each-consequence
+                #     # NB:
+                #     fiveutr_annotation=c.fiveutr_annotation['1'].annotate(
+                #         AltStopDistanceToCDS=hl.parse_int32(
+                #             c.fiveutr_annotation['1'].AltStopDistanceToCDS,
+                #         ),
+                #         CapDistanceToStart=hl.parse_int32(
+                #             c.fiveutr_annotation['1'].CapDistanceToStart,
+                #         ),
+                #         DistanceToCDS=hl.parse_int32(
+                #             c.fiveutr_annotation['1'].DistanceToCDS,
+                #         ),
+                #         DistanceToStop=hl.parse_int32(
+                #             c.fiveutr_annotation['1'].DistanceToStop,
+                #         ),
+                #         Evidence=hl.or_missing(
+                #             # Just in case a weird value ("NA" or anything else) propagates
+                #             (
+                #                 (c.fiveutr_annotation['1'].Evidence == 'True')
+                #                 | (c.fiveutr_annotation['1'].Evidence == 'False')
+                #             ),
+                #             hl.bool(c.fiveutr_annotation['1'].Evidence),
+                #         ),
+                #         StartDistanceToCDS=hl.parse_int32(
+                #             c.fiveutr_annotation['1'].StartDistanceToCDS,
+                #         ),
+                #         newSTOPDistanceToCDS=hl.parse_int32(
+                #             c.fiveutr_annotation['1'].newSTOPDistanceToCDS,
+                #         ),
+                #         alt_type_length=hl.parse_int32(
+                #             c.fiveutr_annotation['1'].alt_type_length,
+                #         ),
+                #         ref_StartDistanceToCDS=hl.parse_int32(
+                #             c.fiveutr_annotation['1'].ref_StartDistanceToCDS,
+                #         ),
+                #         ref_type_length=hl.parse_int32(
+                #             c.fiveutr_annotation['1'].ref_type_length,
+                #         ),
+                #     ),
+                # ),
             )
         )
         .filter(lambda c: c.consequence_terms.size() > 0)
