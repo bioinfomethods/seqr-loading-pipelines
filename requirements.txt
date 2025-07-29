@@ -102,6 +102,7 @@ google-auth==2.35.0
     # via
     #   google-auth-oauthlib
     #   hail
+google-api-python-client==2.176.0
 google-auth-oauthlib==0.8.0
     # via hail
 hail==0.2.133
