@@ -74,6 +74,8 @@ def load_gencode_ensembl_to_refseq_id(gencode_release: int):
     ensembl_to_refseq_ids = {}
     with file_source as f:
         for line in f:
+            if isinstance(line, bytes):
+                line = line.decode('utf-8')
             fields = line.strip().split('\t')
             if len(fields) > EXPECTED_ENSEMBLE_TO_REFSEQ_FIELDS:
                 raise ValueError("Unexpected number of fields on line in Ensembl-to-RefSeq mapping")
