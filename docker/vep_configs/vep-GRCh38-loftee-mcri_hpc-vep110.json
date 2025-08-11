@@ -1,6 +1,6 @@
 {
     "command": [
-        "/hpc/genomeref/ensembl-vep-release-110/vep",
+        "vep",
         "-json",
         "--hgvs",
         "--biotype",
