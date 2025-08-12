@@ -20,7 +20,7 @@ GENCODE_FILE_HEADER = [
 
 def _get_pickle_file(path):
     root, ext = os.path.splitext(path)
-    return root + '.pickle'
+    return root + '.gene-id-to-name.pickle'
 
 
 def _load_parsed_data_or_download(gencode_release, download_path):
@@ -69,7 +69,13 @@ def _parse_gtf_data(gencode_gtf_path):
         info_fields = [x.strip().split() for x in record['info'].split(';') if x != '']
         info_fields = {k: v.strip('"') for k, v in info_fields}
 
-        gene_id_mapping[info_fields['gene_name']] = info_fields['gene_id'].split('.')[0]
+        gene_id = info_fields['gene_id'].split('.')[0]
+        gene_name = info_fields['gene_name']
+
+        if gene_id in gene_id_mapping:
+            raise ValueError(f'Gene ID {gene_id} (for {gene_name}) was attached to more than gene in {gencode_gtf_path}')
+        
+        gene_id_mapping[gene_id] = gene_name
 
     if not is_gs:
         gencode_file.close()
