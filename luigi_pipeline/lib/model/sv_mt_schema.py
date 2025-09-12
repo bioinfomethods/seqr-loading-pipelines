@@ -120,6 +120,10 @@ class SeqrSVVariantSchema(BaseVariantSchema):
     def strvctvre(self):
         return hl.parse_float(self.mt.info.StrVCTVRE)
 
+    @row_annotation(name='SVLEN')
+    def svlen(self):
+        return self.mt.info.SVLEN
+
     @row_annotation()
     def filters(self):
         filters = self.mt.filters.filter(
