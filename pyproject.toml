@@ -12,8 +12,9 @@ dependencies = [
     "slacker==0.14.0",
     "ipywidgets==8.1.7",  # matches pinned version in hail init_notebook.py
     "ipykernel==6.29.2",  # matches pinned version in hail init_notebook.py
-    "notebook==7.0.8",    # upgraded from 6.5.7 to fix pyzmq build issues on macOS
+    "notebook==6.5.7",    # matches pinned version in hail init_notebook.py
     "nbconvert==7.13.1",   # matches pinned version in hail init_notebook.py
+    "pyzmq>=26.0.0",      # override notebook's pyzmq to fix macOS build issues
     # Git/URL installs (PEP 508 direct references)
     "gnomad-qc @ git+https://github.com/broadinstitute/gnomad_qc.git@v4.1",
     "onnxconverter-common @ git+https://github.com/microsoft/onnxconverter-common.git@f7a8eb699caa6f6a78d3bdfbcaf5dfbd43569ebd",
