@@ -10,9 +10,9 @@ PROJECT_GUIDS=""
 SAMPLE_TYPE="WGS"
 REFERENCE_GENOME="GRCh38"
 DATASET_TYPE="SNV_INDEL"
-SKIP_CHECK_SEX_AND_RELATEDNESS="false"
-SKIP_EXPECT_TDR_METRICS="false"
-VALIDATIONS_TO_SKIP="[]"
+SKIP_CHECK_SEX_AND_RELATEDNESS="true"
+SKIP_EXPECT_TDR_METRICS="true"
+VALIDATIONS_TO_SKIP='["all"]'
 
 # Usage function
 usage() {
@@ -29,9 +29,9 @@ Optional Options:
   --sample-type TYPE            Sample type: WGS or WES (default: WGS)
   --reference-genome GENOME     Reference genome: GRCh37 or GRCh38 (default: GRCh38)
   --dataset-type TYPE           Dataset type: SNV_INDEL, MITO, SV, or GCNV (default: SNV_INDEL)
-  --skip-check-sex              Skip sex and relatedness checks (default: false)
-  --skip-expect-tdr-metrics     Skip TDR metrics expectation (default: false)
-  --validations-to-skip LIST    JSON array of validations to skip (default: [])
+  --skip-check-sex              Skip sex and relatedness checks (default: true)
+  --skip-expect-tdr-metrics     Skip TDR metrics expectation (default: true)
+  --validations-to-skip LIST    JSON array of validations to skip (default: ["all"])
   --api-host HOST               API host (default: localhost)
   --api-port PORT               API port (default: 6000)
   -h, --help                    Show this help message
@@ -49,10 +49,10 @@ Examples:
      --dataset-type MITO \\
      --reference-genome GRCh38
 
-  # Skip all validations
+  # Enable validations (not recommended for testing)
   $0 --callset-path /data/sample.vcf.gz \\
      --project-guids R0001_project \\
-     --validations-to-skip '["all"]'
+     --validations-to-skip '[]'
 
 EOF
     exit 1
