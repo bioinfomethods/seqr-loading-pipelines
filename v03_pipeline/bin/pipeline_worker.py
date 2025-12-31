@@ -58,7 +58,7 @@ def parse_latest_queue_path(
     return prr, run_id
 
 
-def process_queue(local_scheduler=False):
+def process_queue(local_scheduler=True):
     run_id = None
     try:
         latest_queue_path = get_oldest_queue_path()
