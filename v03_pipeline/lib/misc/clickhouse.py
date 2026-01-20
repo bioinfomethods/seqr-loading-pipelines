@@ -215,14 +215,18 @@ class TableNameBuilder:
         return f'{self.staging_dst_prefix}/{clickhouse_table.value}`'
 
     def src_table(self, clickhouse_table: ClickHouseTable):
-        path = os.path.join(
-            clickhouse_table.src_path_fn(
-                self.reference_genome,
-                self.dataset_type,
-                self.run_id,
-            ),
-            '*.parquet',
-        )
+        # Use CLICKHOUSE_DATA_DIR if set, otherwise fall back to PIPELINE_DATA_DIR
+        base_dir = os.getenv('CLICKHOUSE_DATA_DIR', Env.PIPELINE_DATA_DIR)
+        
+        # Reconstruct the path using the ClickHouse-specific base
+        relative_path = clickhouse_table.src_path_fn(
+            self.reference_genome,
+            self.dataset_type,
+            self.run_id,
+        ).replace(Env.PIPELINE_DATA_DIR, base_dir)
+        
+        path = os.path.join(relative_path, '*.parquet')
+        
         if path.startswith('gs://'):
             return f"gcs({GCS_NAMED_COLLECTION}, url='{path.replace('gs://', GOOGLE_XML_API_PATH)}')"
         return f"file('{path}', 'Parquet')"
