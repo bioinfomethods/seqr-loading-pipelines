@@ -217,16 +217,20 @@ class TableNameBuilder:
     def src_table(self, clickhouse_table: ClickHouseTable):
         # Use CLICKHOUSE_DATA_DIR if set, otherwise fall back to PIPELINE_DATA_DIR
         base_dir = os.getenv('CLICKHOUSE_DATA_DIR', Env.PIPELINE_DATA_DIR)
-        
+
         # Reconstruct the path using the ClickHouse-specific base
         relative_path = clickhouse_table.src_path_fn(
             self.reference_genome,
             self.dataset_type,
             self.run_id,
         ).replace(Env.PIPELINE_DATA_DIR, base_dir)
-        
-        path = os.path.join(relative_path, '*.parquet')
-        
+
+        # Use string concatenation instead of os.path.join to safely
+        # handle s3:// and gs:// URL schemes.
+        path = relative_path.rstrip('/') + '/*.parquet'
+
+        if path.startswith('s3://'):
+            return f"s3('{path}', 'Parquet')"
         if path.startswith('gs://'):
             return f"gcs({GCS_NAMED_COLLECTION}, url='{path.replace('gs://', GOOGLE_XML_API_PATH)}')"
         return f"file('{path}', 'Parquet')"
