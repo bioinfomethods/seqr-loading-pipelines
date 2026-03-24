@@ -11,6 +11,7 @@ from v03_pipeline.lib.annotations.misc import (
     annotate_reference_dataset_globals,
 )
 from v03_pipeline.lib.misc.callsets import get_callset_ht
+from v03_pipeline.lib.logger import get_logger
 from v03_pipeline.lib.misc.io import checkpoint, remap_pedigree_hash
 from v03_pipeline.lib.misc.math import constrain
 from v03_pipeline.lib.paths import (
@@ -33,6 +34,8 @@ from v03_pipeline.lib.tasks.write_metadata_for_run import (
     WriteMetadataForRunTask,
 )
 from v03_pipeline.lib.vep import run_vep
+
+logger = get_logger(__name__)
 
 VARIANTS_PER_VEP_PARTITION = 1e3
 MIN_PARTITIONS = 10
@@ -171,6 +174,28 @@ class WriteNewVariantsTableTask(BaseWriteTask):
             self.dataset_type,
             self.reference_genome,
         )
+
+        # Checkpoint and validate that VEP actually produced annotations.
+        # hl.vep with tolerate_parse_error=True silently produces null
+        # vep structs when VEP fails (e.g. missing FASTA, broken plugins).
+        if self.dataset_type.veppable and new_variants_count > 0:
+            new_variants_ht, _ = checkpoint(new_variants_ht)
+            vep_defined_count = new_variants_ht.aggregate(
+                hl.agg.count_where(hl.is_defined(new_variants_ht.vep)),
+            )
+            logger.info(
+                'VEP annotated %d / %d new variants.',
+                vep_defined_count,
+                new_variants_count,
+            )
+            if vep_defined_count == 0:
+                msg = (
+                    f'VEP produced no annotations for any of {new_variants_count} '
+                    f'new variants. This usually indicates a misconfigured VEP '
+                    f'installation (missing FASTA, cache, or plugins). Check the '
+                    f'VEP config and reference data paths.'
+                )
+                raise RuntimeError(msg)
 
         # Select down to the formatting annotations fields and
         # any reference dataset collection annotations.
