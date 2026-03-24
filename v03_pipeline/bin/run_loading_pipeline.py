@@ -21,6 +21,7 @@ import uuid
 import luigi
 import luigi.execution_summary
 
+from v03_pipeline.lib.tasks.run_pipeline import RunPipelineTask
 from v03_pipeline.lib.tasks.write_clickhouse_load_success_file import (
     WriteClickhouseLoadSuccessFileTask,
 )
@@ -52,12 +53,23 @@ def main():
         nargs='*',
         default=[],
     )
+    parser.add_argument(
+        '--skip-clickhouse-load',
+        action='store_true',
+        default=False,
+        help='Stop after running the pipeline without loading into ClickHouse.',
+    )
 
     args = parser.parse_args()
 
     run_id = args.run_id or f'manual_{uuid.uuid4().hex[:8]}'
 
-    task = WriteClickhouseLoadSuccessFileTask(
+    task_cls = (
+        RunPipelineTask if args.skip_clickhouse_load
+        else WriteClickhouseLoadSuccessFileTask
+    )
+
+    task = task_cls(
         callset_path=args.callset_path,
         project_guids=args.project_guids,
         reference_genome=args.reference_genome,
