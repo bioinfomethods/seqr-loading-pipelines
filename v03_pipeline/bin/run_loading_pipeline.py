@@ -21,10 +21,14 @@ import uuid
 import luigi
 import luigi.execution_summary
 
+from v03_pipeline.lib.core import DatasetType, ReferenceGenome, SampleType
+from v03_pipeline.lib.misc.validation import ALL_VALIDATIONS, SKIPPABLE_VALIDATIONS
 from v03_pipeline.lib.tasks.run_pipeline import RunPipelineTask
 from v03_pipeline.lib.tasks.write_clickhouse_load_success_file import (
     WriteClickhouseLoadSuccessFileTask,
 )
+
+STRINGIFIED_SKIPPABLE_VALIDATIONS = [f.__name__ for f in SKIPPABLE_VALIDATIONS]
 
 
 def main():
@@ -64,6 +68,14 @@ def main():
 
     run_id = args.run_id or f'manual_{uuid.uuid4().hex[:8]}'
 
+    reference_genome = ReferenceGenome(args.reference_genome)
+    dataset_type = DatasetType(args.dataset_type)
+    sample_type = SampleType(args.sample_type)
+
+    validations_to_skip = args.validations_to_skip
+    if validations_to_skip == [ALL_VALIDATIONS]:
+        validations_to_skip = STRINGIFIED_SKIPPABLE_VALIDATIONS
+
     task_cls = (
         RunPipelineTask if args.skip_clickhouse_load
         else WriteClickhouseLoadSuccessFileTask
@@ -72,14 +84,14 @@ def main():
     task = task_cls(
         callset_path=args.callset_path,
         project_guids=args.project_guids,
-        reference_genome=args.reference_genome,
-        dataset_type=args.dataset_type,
-        sample_type=args.sample_type,
+        reference_genome=reference_genome,
+        dataset_type=dataset_type,
+        sample_type=sample_type,
         run_id=run_id,
         attempt_id=args.attempt_id,
         skip_check_sex_and_relatedness=args.skip_check_sex_and_relatedness,
         skip_expect_tdr_metrics=args.skip_expect_tdr_metrics,
-        validations_to_skip=args.validations_to_skip,
+        validations_to_skip=validations_to_skip,
     )
 
     result = luigi.build(
