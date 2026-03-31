@@ -22,16 +22,17 @@ def remap_sample_ids(
         msg = f'Duplicate s or seqr_id entries in remap file were found. Duplicate s:{s_dups}. Duplicate seqr_id:{seqr_dups}.'
         raise SeqrValidationError(msg)
 
-    missing_samples = project_remap_ht.anti_join(mt.cols()).collect()
     remap_count = len(collected_remap)
+    matched_count = project_remap_ht.semi_join(mt.cols()).count()
+    missing_count = remap_count - matched_count
 
-    if len(missing_samples) != 0:
-        message = (
-            f'Only {project_remap_ht.semi_join(mt.cols()).count()} out of {remap_count} '
-            'remap IDs matched IDs in the variant callset.\n'
-            f"IDs that aren't in the callset: {missing_samples}\n"
+    if missing_count > 0:
+        logger.warning(
+            f'{missing_count} out of {remap_count} remap IDs in the pedigree '
+            f'are not present in the variant callset and will be skipped.',
         )
-        raise SeqrValidationError(message)
+        # Filter the remap table to only entries present in the callset.
+        project_remap_ht = project_remap_ht.semi_join(mt.cols())
 
     mt = mt.annotate_cols(**project_remap_ht[mt.s])
     remap_expr = hl.if_else(hl.is_missing(mt.seqr_id), mt.s, mt.seqr_id)
