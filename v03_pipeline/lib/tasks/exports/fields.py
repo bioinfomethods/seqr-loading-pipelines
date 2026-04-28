@@ -157,7 +157,9 @@ def get_entries_export_fields(
         ),
         **(
             {
-                'geneIds': hl.set(ht.sorted_gene_consequences.gene_id)
+                'geneIds': hl.set(
+                    ht.sorted_gene_consequences.gene_id.filter(hl.is_defined),
+                )
                 if dataset_type == DatasetType.SV
                 else hl.set(ht.sorted_transcript_consequences.gene_id)
                 if dataset_type == DatasetType.SNV_INDEL
