@@ -354,7 +354,11 @@ class DatasetType(StrEnum):
 
     @property
     def export_all_callset_variants(self):
-        return self == DatasetType.GCNV
+        # SNV_INDEL exports every callset variant (from the annotations table cache)
+        # rather than only the variants new to the cache, so that a ClickHouse
+        # instance that missed an earlier run still receives annotations for the
+        # variants it shares with this one. ClickHouse skips keys it already has.
+        return self in {DatasetType.GCNV, DatasetType.SNV_INDEL}
 
     @property
     def export_vcf_annotation_fns(self) -> list[Callable[..., hl.Expression]]:

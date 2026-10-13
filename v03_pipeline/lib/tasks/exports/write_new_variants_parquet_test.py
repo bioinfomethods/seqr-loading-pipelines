@@ -44,20 +44,18 @@ class WriteNewVariantsParquetTest(MockedDatarootTestCase):
             TEST_SNV_INDEL_ANNOTATIONS,
         )
         ht.write(
-            new_variants_table_path(
+            variant_annotations_table_path(
                 ReferenceGenome.GRCh38,
                 DatasetType.SNV_INDEL,
-                TEST_RUN_ID,
             ),
         )
         ht = hl.read_table(
             TEST_GRCH37_SNV_INDEL_ANNOTATIONS,
         )
         ht.write(
-            new_variants_table_path(
+            variant_annotations_table_path(
                 ReferenceGenome.GRCh37,
                 DatasetType.SNV_INDEL,
-                TEST_RUN_ID,
             ),
         )
         ht = hl.read_table(
@@ -96,9 +94,24 @@ class WriteNewVariantsParquetTest(MockedDatarootTestCase):
             ),
         )
 
+    @mock.patch(
+        'v03_pipeline.lib.tasks.exports.write_new_variants_parquet.UpdateVariantAnnotationsTableWithNewSamplesTask',
+    )
+    @mock.patch(
+        'v03_pipeline.lib.tasks.exports.write_new_variants_parquet.get_callset_ht',
+    )
     def test_write_new_variants_parquet_test(
         self,
+        get_callset_ht: Mock,
+        update_variant_annotations_task: Mock,
     ) -> None:
+        get_callset_ht.return_value = hl.read_table(
+            variant_annotations_table_path(
+                ReferenceGenome.GRCh38,
+                DatasetType.SNV_INDEL,
+            ),
+        )
+        update_variant_annotations_task.return_value = MockCompleteTask()
         worker = luigi.worker.Worker()
         task = WriteNewVariantsParquetTask(
             reference_genome=ReferenceGenome.GRCh38,
@@ -220,9 +233,24 @@ class WriteNewVariantsParquetTest(MockedDatarootTestCase):
             ],
         )
 
+    @mock.patch(
+        'v03_pipeline.lib.tasks.exports.write_new_variants_parquet.UpdateVariantAnnotationsTableWithNewSamplesTask',
+    )
+    @mock.patch(
+        'v03_pipeline.lib.tasks.exports.write_new_variants_parquet.get_callset_ht',
+    )
     def test_grch37_write_new_variants_parquet_test(
         self,
+        get_callset_ht: Mock,
+        update_variant_annotations_task: Mock,
     ) -> None:
+        get_callset_ht.return_value = hl.read_table(
+            variant_annotations_table_path(
+                ReferenceGenome.GRCh37,
+                DatasetType.SNV_INDEL,
+            ),
+        )
+        update_variant_annotations_task.return_value = MockCompleteTask()
         worker = luigi.worker.Worker()
         task = WriteNewVariantsParquetTask(
             reference_genome=ReferenceGenome.GRCh37,

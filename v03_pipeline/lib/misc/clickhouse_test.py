@@ -1052,6 +1052,39 @@ class ClickhouseTest(MockedDatarootTestCase):
         )[0][0]
         self.assertEqual(entries_count, 3)
 
+    def test_insert_into_seqr_variants_skips_existing_keys(self):
+        client = get_clickhouse_client()
+        client.execute(
+            f"""
+            INSERT INTO {Env.CLICKHOUSE_DATABASE}.`GRCh38/SNV_INDEL/reference_data/clinvar/all_variants`
+            VALUES ('1-3-A-C', 1, 'Pathogenic'), ('2-4-A-T', 2, 'Pathogenic')
+            """,
+        )
+        client.execute(
+            f"""
+            INSERT INTO {Env.CLICKHOUSE_DATABASE}.`GRCh38/SNV_INDEL/key_lookup`
+            VALUES ('1-3-A-C', 10), ('2-4-A-T', 11)
+            """,
+        )
+        table_name_builder = TableNameBuilder(
+            ReferenceGenome.GRCh38,
+            DatasetType.SNV_INDEL,
+            TEST_RUN_ID,
+        )
+        # A second load re-sending the same variants (as a later run exporting
+        # every callset variant would) must not duplicate seqr_variants rows.
+        for _ in range(2):
+            ClickhouseReferenceDataset.CLINVAR.insert_into_seqr_variants_and_refresh_search(
+                table_name_builder,
+            )
+        seqr_variants = client.execute(
+            f"""
+            SELECT key, alleleId
+            FROM {Env.CLICKHOUSE_DATABASE}.`GRCh38/SNV_INDEL/reference_data/clinvar/seqr_variants`
+            """,
+        )
+        self.assertCountEqual(seqr_variants, [(10, 1), (11, 2)])
+
     def test_delete_families(self):
         table_name_builder = TableNameBuilder(
             ReferenceGenome.GRCh38,

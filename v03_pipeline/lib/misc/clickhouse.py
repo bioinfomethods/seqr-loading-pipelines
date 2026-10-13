@@ -399,6 +399,19 @@ class ClickhouseReferenceDataset(StrEnum):
             )
             """,
         )
+        # A run's key lookup can include variants already loaded by earlier runs
+        # (SNV_INDEL exports every callset variant), and seqr_variants is a plain
+        # MergeTree that would keep a duplicate row for each re-sent key. The
+        # existing keys go into a Set first, as in direct_insert_annotations, rather
+        # than joining against the table while inserting into it.
+        logged_query(
+            f"""
+            CREATE TABLE {table_name_builder.staging_dst_prefix}/_tmp_existing_seqr_variant_keys` ENGINE = Set AS (
+                SELECT key
+                FROM {self.seqr_variants_path(table_name_builder)}
+            )
+            """,
+        )
         logged_query(
             f"""
             INSERT INTO {self.seqr_variants_path(table_name_builder)}
@@ -410,6 +423,7 @@ class ClickhouseReferenceDataset(StrEnum):
             INNER JOIN {table_name_builder.dst_table(ClickHouseTable.KEY_LOOKUP)} dst
             ON {ClickHouseTable.KEY_LOOKUP.join_condition}
             WHERE src.variantId IN {table_name_builder.staging_dst_prefix}/_tmp_loadable_variantIds`
+            AND dst.key NOT IN {table_name_builder.staging_dst_prefix}/_tmp_existing_seqr_variant_keys`
             """,
         )
         self.refresh_search(table_name_builder)

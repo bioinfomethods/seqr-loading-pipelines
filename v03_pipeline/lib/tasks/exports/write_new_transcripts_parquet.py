@@ -2,9 +2,11 @@ import hail as hl
 import luigi
 import luigi.util
 
+from v03_pipeline.lib.misc.callsets import get_callset_ht
 from v03_pipeline.lib.paths import (
     new_transcripts_parquet_path,
     new_variants_table_path,
+    variant_annotations_table_path,
 )
 from v03_pipeline.lib.tasks.base.base_loading_run_params import (
     BaseLoadingRunParams,
@@ -41,20 +43,43 @@ class WriteNewTranscriptsParquetTask(BaseWriteParquetTask):
         return GCSorLocalFolderTarget(self.output().path).exists()
 
     def requires(self) -> luigi.Task:
-        if self.dataset_type.export_all_callset_variants:
+        if (
+            self.dataset_type.export_all_callset_variants
+            and len(self.project_guids) > 0
+        ):
             return self.clone(UpdateVariantAnnotationsTableWithNewSamplesTask)
         if self.dataset_type.should_send_to_allele_registry:
             return self.clone(UpdateNewVariantsWithCAIDsTask)
         return self.clone(WriteNewVariantsTableTask)
 
     def create_table(self) -> None:
-        ht = hl.read_table(
-            new_variants_table_path(
+        if (
+            self.dataset_type.export_all_callset_variants
+            and len(self.project_guids) > 0
+        ):
+            # Mirrors WriteNewVariantsParquetTask: export transcripts for every
+            # callset variant, read from the annotations table cache.
+            ht = hl.read_table(
+                variant_annotations_table_path(
+                    self.reference_genome,
+                    self.dataset_type,
+                ),
+            )
+            callset_ht = get_callset_ht(
                 self.reference_genome,
                 self.dataset_type,
-                self.run_id,
-            ),
-        )
+                self.callset_path,
+                self.project_guids,
+            )
+            ht = ht.semi_join(callset_ht)
+        else:
+            ht = hl.read_table(
+                new_variants_table_path(
+                    self.reference_genome,
+                    self.dataset_type,
+                    self.run_id,
+                ),
+            )
         ht = drop_unexported_fields(ht)
         ht = unmap_formatting_annotation_enums(
             ht,
