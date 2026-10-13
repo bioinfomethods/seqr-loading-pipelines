@@ -1,5 +1,6 @@
 import functools
 import shutil
+import unittest
 from unittest.mock import Mock, PropertyMock, patch
 
 import hail as hl
@@ -35,7 +36,9 @@ from v03_pipeline.lib.paths import (
 from v03_pipeline.lib.reference_datasets.reference_dataset import ReferenceDataset
 from v03_pipeline.lib.tasks.files import GCSorLocalFolderTarget
 from v03_pipeline.lib.tasks.update_variant_annotations_table_with_new_samples import (
+    StaleNewVariantsError,
     UpdateVariantAnnotationsTableWithNewSamplesTask,
+    union_new_variants,
 )
 from v03_pipeline.lib.test.misc import copy_project_pedigree_to_mocked_dir
 from v03_pipeline.lib.test.mocked_reference_datasets_testcase import (
@@ -1648,3 +1651,65 @@ class UpdateVariantAnnotationsTableWithNewSamplesTaskTest(
                 ),
             ],
         )
+
+
+class UnionNewVariantsTest(unittest.TestCase):
+    @staticmethod
+    def make_table(rows: list[tuple[int, int]], max_key_: int) -> hl.Table:
+        ht = hl.Table.parallelize(
+            [
+                {
+                    'locus': hl.Locus('chr1', position, 'GRCh38'),
+                    'alleles': ['A', 'T'],
+                    'key_': key_,
+                }
+                for position, key_ in rows
+            ],
+            hl.tstruct(
+                locus=hl.tlocus('GRCh38'),
+                alleles=hl.tarray(hl.tstr),
+                key_=hl.tint64,
+            ),
+            key=['locus', 'alleles'],
+        )
+        return ht.annotate_globals(max_key_=hl.int64(max_key_))
+
+    def test_first_application(self) -> None:
+        ht = self.make_table([(100, 0), (200, 1)], max_key_=1)
+        new_variants_ht = self.make_table([(300, 2), (400, 3)], max_key_=-1)
+        ht = union_new_variants(ht, new_variants_ht, 'run_1')
+        self.assertEqual(ht.key_.collect(), [0, 1, 2, 3])
+
+    def test_empty_new_variants(self) -> None:
+        ht = self.make_table([(100, 0)], max_key_=0)
+        new_variants_ht = self.make_table([], max_key_=-1)
+        ht = union_new_variants(ht, new_variants_ht, 'run_1')
+        self.assertEqual(ht.key_.collect(), [0])
+
+    def test_replayed_update_is_skipped(self) -> None:
+        ht = self.make_table([(100, 0), (200, 1), (300, 2), (400, 3)], max_key_=3)
+        new_variants_ht = self.make_table([(300, 2), (400, 3)], max_key_=-1)
+        ht = union_new_variants(ht, new_variants_ht, 'run_1')
+        self.assertEqual(ht.key_.collect(), [0, 1, 2, 3])
+
+    def test_overlapping_run_fails(self) -> None:
+        # Another run assigned keys 2 and 3 to variants at 300 and 500 after this
+        # run computed its new variants against the table when max_key_ was 1.
+        ht = self.make_table([(100, 0), (200, 1), (300, 2), (500, 3)], max_key_=3)
+        new_variants_ht = self.make_table([(300, 2), (400, 3)], max_key_=-1)
+        with self.assertRaises(StaleNewVariantsError):
+            union_new_variants(ht, new_variants_ht, 'run_1')
+
+    def test_same_variant_different_key_fails(self) -> None:
+        ht = self.make_table([(100, 0), (200, 1), (300, 5)], max_key_=5)
+        new_variants_ht = self.make_table([(300, 2)], max_key_=-1)
+        with self.assertRaises(StaleNewVariantsError):
+            union_new_variants(ht, new_variants_ht, 'run_1')
+
+    def test_key_gap_fails(self) -> None:
+        # Keys assigned past the table's max_key_, e.g. the table was restored
+        # from an older copy after this run computed its new variants.
+        ht = self.make_table([(100, 0)], max_key_=0)
+        new_variants_ht = self.make_table([(300, 5)], max_key_=-1)
+        with self.assertRaises(StaleNewVariantsError):
+            union_new_variants(ht, new_variants_ht, 'run_1')
